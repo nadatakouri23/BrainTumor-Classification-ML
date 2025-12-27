@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classification des Tumeurs Cérébrales - GBM vs LGG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <i class="fas fa-brain"></i>
+                <h1>Classification des Tumeurs Cérébrales</h1>
+                <p class="subtitle">Système de prédiction GBM vs LGG basé sur l'Intelligence Artificielle</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <div class="content-wrapper">
+                <!-- Form Section -->
+                <section class="form-section">
+                    <h2><i class="fas fa-user-md"></i> Informations du Patient</h2>
+                    
+                    <form id="predictionForm">
+                        <!-- Informations démographiques -->
+                        <div class="form-group">
+                            <label for="age">
+                                <i class="fas fa-calendar-alt"></i> Âge au diagnostic (années)
+                            </label>
+                            <input type="number" id="age" name="age" min="0" max="120" required 
+                                   placeholder="Ex: 45">
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-venus-mars"></i> Genre
+                            </label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="female" required>
+                                    <span>Féminin</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="male" required>
+                                    <span>Masculin</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="race">
+                                <i class="fas fa-globe"></i> Origine ethnique
+                            </label>
+                            <select id="race" name="race" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="white">Caucasien / Blanc</option>
+                                <option value="black">Afro-Américain / Noir</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+
+                        <!-- Mutations génétiques -->
+                        <div class="genetic-section">
+                            <h3><i class="fas fa-dna"></i> Profil Génétique</h3>
+                            <p class="info-text">Sélectionner les gènes présentant des mutations</p>
+                            
+                            <div class="genes-grid">
+                                {% for gene, description in genes.items() %}
+                                <div class="gene-card">
+                                    <label class="gene-label">
+                                        <input type="checkbox" name="{{ gene }}" class="gene-checkbox">
+                                        <span class="gene-name">{{ gene }}</span>
+                                        <span class="gene-description">{{ description }}</span>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-brain"></i> Analyser
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Results Section -->
+                <section class="results-section" id="resultsSection" style="display: none;">
+                    <h2><i class="fas fa-chart-line"></i> Résultats de l'Analyse</h2>
+                    
+                    <div id="loadingSpinner" class="loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Analyse en cours...</p>
+                    </div>
+
+                    <div id="results" style="display: none;">
+                        <!-- Prediction Card -->
+                        <div class="prediction-card" id="predictionCard">
+                            <div class="prediction-icon">
+                                <i class="fas fa-microscope"></i>
+                            </div>
+                            <h3>Prédiction</h3>
+                            <p class="prediction-result" id="predictionResult"></p>
+                            <p class="confidence-text" id="confidenceText"></p>
+                        </div>
+
+                        <!-- Probability Chart -->
+                        <div class="probability-section">
+                            <h3>Distribution des Probabilités</h3>
+                            <div class="probability-bars">
+                                <div class="prob-item">
+                                    <div class="prob-label">
+                                        <span class="label-text">LGG (Bas grade)</span>
+                                        <span class="label-value" id="lggProb">0%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill lgg" id="lggBar"></div>
+                                    </div>
+                                </div>
+                                <div class="prob-item">
+                                    <div class="prob-label">
+                                        <span class="label-text">GBM (Haut grade)</span>
+                                        <span class="label-value" id="gbmProb">0%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill gbm" id="gbmBar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interpretation -->
+                        <div class="interpretation-box">
+                            <h3><i class="fas fa-info-circle"></i> Interprétation Clinique</h3>
+                            <p id="interpretationText"></p>
+                            <div class="warning-box">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p><strong>Avertissement :</strong> Ces résultats sont générés par un modèle d'IA et doivent être confirmés par un professionnel de santé qualifié. Ne pas utiliser comme diagnostic définitif.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;"></div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 - Projet de Machine Learning - Classification des Tumeurs Cérébrales</p>
+            <p>Développé avec <i class="fas fa-heart"></i> pour l'aide au diagnostic médical</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
